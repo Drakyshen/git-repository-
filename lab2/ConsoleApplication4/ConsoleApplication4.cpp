@@ -1,182 +1,110 @@
 ﻿#include <iostream>
 #include <cmath>
 #include <string>
-#include <iomanip>
 using namespace std;
 
 class Triangle {
 private:
-    double a, b, c;      // сторони трикутника
-    double A, B, C;      // кути трикутника (у градусах)
-
-    // Константа π
-    const double PI = 3.14159265358979323846;
+    double a, b, c;     // sides
+    double A, B, C;     // angles (in degrees)
 
 public:
-    // Конструктор за замовчуванням
-    Triangle() : a(0), b(0), c(0), A(0), B(0), C(0) {}
-
-    // Метод ініціалізації
-    void Init(double sideA, double sideB, double sideC) {
-        if (sideA > 0 && sideB > 0 && sideC > 0 &&
-            sideA + sideB > sideC && sideA + sideC > sideB && sideB + sideC > sideA) {
-            a = sideA;
-            b = sideB;
-            c = sideC;
-
-            // Обчислення кутів за теоремою косинусів
-            A = acos((b * b + c * c - a * a) / (2 * b * c)) * 180 / PI;
-            B = acos((a * a + c * c - b * b) / (2 * a * c)) * 180 / PI;
-            C = 180 - A - B;
-        }
-        else {
-            cout << "Error: such triangle does not exist!" << endl;
-            a = b = c = A = B = C = 0;
-        }
+    // ===== Initialization method =====
+    void Init(double s1, double s2, double s3) {
+        a = s1;
+        b = s2;
+        c = s3;
+        calculateAngles();
     }
 
-    // Метод введення з клавіатури
+    // ===== Input from keyboard =====
     void Read() {
-        double sideA, sideB, sideC;
-        cout << "Enter side a: ";
-        cin >> sideA;
-        cout << "Enter side b: ";
-        cin >> sideB;
-        cout << "Enter side c: ";
-        cin >> sideC;
-        Init(sideA, sideB, sideC);
+        cout << "Enter sides a, b, c: ";
+        cin >> a >> b >> c;
+        calculateAngles();
     }
 
-    // Метод виведення на екран
-    void Display() const {
+    // ===== Display method =====
+    void Display() {
         cout << toString() << endl;
     }
 
-    // Метод перетворення в рядок
-    string toString() const {
-        string type = triangleType();
-        string result = "Sides: a=" + to_string(a) + ", b=" + to_string(b) + ", c=" + to_string(c) + "\n";
-        result += "Angles: A=" + to_string(A) + "°, B=" + to_string(B) + "°, C=" + to_string(C) + "°\n";
-        result += "Perimeter: " + to_string(perimeter()) + "\n";
-        result += "Area: " + to_string(area()) + "\n";
-        result += "Heights: ha=" + to_string(heightA()) + ", hb=" + to_string(heightB()) + ", hc=" + to_string(heightC()) + "\n";
-        result += "Triangle type: " + type + "\n";
-        return result;
+    // ===== Convert to string =====
+    string toString() {
+        string type = getType();
+        return "Triangle: sides = (" + to_string(a) + ", " + to_string(b) + ", " + to_string(c) +
+            "), angles = (" + to_string(A) + ", " + to_string(B) + ", " + to_string(C) +
+            "), perimeter = " + to_string(perimeter()) +
+            ", area = " + to_string(area()) +
+            ", type = " + type;
     }
 
-    // Обчислення периметра
+    // ===== Getters and setters =====
+    double getA() const { return a; }
+    double getB() const { return b; }
+    double getC() const { return c; }
+
+    void setA(double value) { a = value; calculateAngles(); }
+    void setB(double value) { b = value; calculateAngles(); }
+    void setC(double value) { c = value; calculateAngles(); }
+
+    // ===== Computation methods =====
     double perimeter() const {
         return a + b + c;
     }
 
-    // Обчислення площі (за формулою Герона)
     double area() const {
-        double p = perimeter() / 2;
-        // Додаємо перевірку на коректність для уникнення NaN
-        if (p <= 0 || p <= a || p <= b || p <= c) {
-            return 0;
-        }
-        return sqrt(p * (p - a) * (p - b) * (p - c));
+        double s = perimeter() / 2;
+        return sqrt(s * (s - a) * (s - b) * (s - c));
     }
 
-    // Обчислення висот
+    void calculateAngles() {
+        if (a > 0 && b > 0 && c > 0) {
+            A = acos((b * b + c * c - a * a) / (2 * b * c)) * 180 / M_PI;
+            B = acos((a * a + c * c - b * b) / (2 * a * c)) * 180 / M_PI;
+            C = 180 - (A + B);
+        }
+        else {
+            A = B = C = 0;
+        }
+    }
+
     double heightA() const {
-        if (a == 0) return 0;
-        return (2 * area()) / a;
+        return 2 * area() / a;
     }
 
     double heightB() const {
-        if (b == 0) return 0;
-        return (2 * area()) / b;
+        return 2 * area() / b;
     }
 
     double heightC() const {
-        if (c == 0) return 0;
-        return (2 * area()) / c;
+        return 2 * area() / c;
     }
 
-    // Визначення типу трикутника
-    string triangleType() const {
-        const double epsilon = 0.001;
-
-        if (a == 0 || b == 0 || c == 0) return "Invalid";
-
-        // Перевірка на рівносторонній
-        if (fabs(a - b) < epsilon && fabs(b - c) < epsilon)
+    string getType() const {
+        if (a == b && b == c)
             return "Equilateral";
-
-        // Перевірка на рівнобедрений
-        else if (fabs(a - b) < epsilon || fabs(a - c) < epsilon || fabs(b - c) < epsilon)
+        else if (a == b || b == c || a == c)
             return "Isosceles";
-
-        // Перевірка на прямокутний
-        else if (fabs(A - 90) < epsilon || fabs(B - 90) < epsilon || fabs(C - 90) < epsilon)
-            return "Right-angled";
-
-        // Перевірка за теоремою Піфагора
-        else if (fabs(a * a + b * b - c * c) < epsilon ||
-            fabs(a * a + c * c - b * b) < epsilon ||
-            fabs(b * b + c * c - a * a) < epsilon)
-            return "Right-angled";
-
+        else if (fabs(pow(a, 2) + pow(b, 2) - pow(c, 2)) < 0.0001 ||
+            fabs(pow(a, 2) + pow(c, 2) - pow(b, 2)) < 0.0001 ||
+            fabs(pow(b, 2) + pow(c, 2) - pow(a, 2)) < 0.0001)
+            return "Right";
         else
             return "Scalene";
-    }
-
-    // Гетери для отримання значень сторін
-    double getSideA() const { return a; }
-    double getSideB() const { return b; }
-    double getSideC() const { return c; }
-
-    // Гетери для отримання значень кутів
-    double getAngleA() const { return A; }
-    double getAngleB() const { return B; }
-    double getAngleC() const { return C; }
-
-    // Сетери для зміни значень сторін
-    void setSideA(double sideA) {
-        if (sideA > 0 && sideA + b > c && sideA + c > b && b + c > sideA) {
-            a = sideA;
-            // Перерахувати кути
-            A = acos((b * b + c * c - a * a) / (2 * b * c)) * 180 / PI;
-            B = acos((a * a + c * c - b * b) / (2 * a * c)) * 180 / PI;
-            C = 180 - A - B;
-        }
-    }
-
-    void setSideB(double sideB) {
-        if (sideB > 0 && a + sideB > c && a + c > sideB && sideB + c > a) {
-            b = sideB;
-            // Перерахувати кути
-            A = acos((b * b + c * c - a * a) / (2 * b * c)) * 180 / PI;
-            B = acos((a * a + c * c - b * b) / (2 * a * c)) * 180 / PI;
-            C = 180 - A - B;
-        }
-    }
-
-    void setSideC(double sideC) {
-        if (sideC > 0 && a + b > sideC && a + sideC > b && b + sideC > a) {
-            c = sideC;
-            // Перерахувати кути
-            A = acos((b * b + c * c - a * a) / (2 * b * c)) * 180 / PI;
-            B = acos((a * a + c * c - b * b) / (2 * a * c)) * 180 / PI;
-            C = 180 - A - B;
-        }
     }
 };
 
 int main() {
-    Triangle T;       // створення об'єкта класу
-    T.Read();         // введення даних з клавіатури
-    cout << endl;
-    T.Display();      // виведення результатів на екран
+    cout << "=== Triangle Example ===" << endl;
 
-    // Демонстрація роботи гетерів та сетерів
-    cout << "\nDemonstration of getters and setters:" << endl;
-    cout << "Current side A: " << T.getSideA() << endl;
-    T.setSideA(6.0);
-    cout << "After changing side A to 6.0:" << endl;
-    T.Display();
+    Triangle t1;
+    t1.Read();
+    t1.Display();
+
+    cout << "Height to side a: " << t1.heightA() << endl;
+    cout << "Height to side b: " << t1.heightB() << endl;
+    cout << "Height to side c: " << t1.heightC() << endl;
 
     return 0;
 }
